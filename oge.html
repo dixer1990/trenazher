@@ -123,7 +123,7 @@ body{
 .item .lbar{height:5px;background:#0a0f15;border:1px solid var(--line);margin-top:6px;}
 .item .lbar>i{display:block;height:100%;background:var(--gold);transition:width .4s;}
 .item.done .lbar>i{background:var(--green);}
-.item .pc{flex:0 0 46px;text-align:right;font-size:15px;font-weight:800;color:var(--gold);}
+.item .pc{flex:0 0 auto;min-width:46px;white-space:nowrap;text-align:right;font-size:15px;font-weight:800;color:var(--gold);}
 .item.done .pc{color:var(--green);}
 .tag{
   display:inline-block;font-size:9.5px;letter-spacing:1px;
@@ -278,6 +278,8 @@ button{font-family:inherit;}
   color:var(--steel);font-size:11px;padding:6px 9px;cursor:pointer;letter-spacing:1px;
 }
 .foot{text-align:center;font-size:10.5px;color:#4a5b6d;margin-top:26px;letter-spacing:1px;}
+.to-map{display:inline-block;margin:2px 0 10px;color:var(--steel);text-decoration:none;font-size:12px;letter-spacing:1.5px;border:1px solid var(--line);background:rgba(10,15,21,.6);padding:7px 11px;}
+.to-map:hover,.to-map:active{color:var(--gold);border-color:var(--gold-dim);}
 .hidden{display:none !important;}
 @media (max-width:420px){
   #feed{max-width:70vw;font-size:10px;}
@@ -1407,7 +1409,7 @@ SECTIONS.forEach(function(s){state.solved[s.id]={};});
     if(d&&d.sound===false)state.sound=false;
   }catch(err){}
 })();
-function save(){try{localStorage.setItem(STORE,JSON.stringify({solved:state.solved,seen:state.seen,sound:state.sound}));}catch(err){}}
+function save(){try{var g=globalTotals();localStorage.setItem(STORE,JSON.stringify({solved:state.solved,seen:state.seen,sound:state.sound,pct:g.p,done:g.d,total:g.t}));}catch(err){}}
 function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
 
 function secTotal(s){return s.q.length;}
@@ -1503,6 +1505,7 @@ var app=document.getElementById('app');
 function renderMenu(){
   var g=globalTotals();
   var h='';
+  h+='<a class="to-map" href="./">&#8592; НА КАРТУ</a>';
   h+='<div class="logo">'+
      '<h1>ОПЕРАЦИЯ: ОГЭ</h1>'+
      '<div class="sub">ОРФОГРАФИЯ · ЗАДАНИЯ 6–7 · ИТОГОВЫЙ ТЕСТ</div>'+
