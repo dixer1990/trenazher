@@ -3,7 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Карта: операция ОГЭ</title>
+<title>ОГЭ GO</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0d1117">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ОГЭ GO">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <script>
 /* =====================================================================
    СПИСОК ТОЧЕК НА КАРТЕ: точка → файл тренажёра
@@ -86,6 +94,11 @@ button{font:inherit;}
 .tbtn{background:rgba(10,15,21,.7);border:1px solid var(--line);color:var(--steel);font-size:11.5px;letter-spacing:1.5px;
   padding:7px 11px;cursor:pointer;}
 .tbtn:hover{color:var(--gold);border-color:var(--gold-dim);}
+.tbtn.inst{color:var(--gold);border-color:var(--gold-dim);}
+.tbtn[hidden]{display:none;}
+.ios-steps{margin:12px 0 4px;padding:0;list-style:none;counter-reset:s;}
+.ios-steps li{counter-increment:s;display:flex;gap:10px;align-items:flex-start;font-size:14.5px;line-height:1.45;color:#dbe3ec;margin-bottom:9px;}
+.ios-steps li:before{content:counter(s);flex:0 0 24px;height:24px;border-radius:50%;border:2px solid var(--gold);color:var(--gold);font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;}
 
 .rankbox{flex:1 1 320px;max-width:470px;display:flex;gap:12px;align-items:center;background:var(--panel);border:1px solid var(--line);padding:10px 12px;}
 .rankbox img{width:62px;height:62px;flex:0 0 62px;object-fit:contain;filter:drop-shadow(0 3px 6px rgba(0,0,0,.6));}
@@ -241,11 +254,12 @@ button{font:inherit;}
 <div class="wrap">
   <div class="top">
     <div class="brand">
-      <div class="kicker">РУССКИЙ ЯЗЫК · ПОДГОТОВКА К ОГЭ</div>
+      <div class="kicker">ОГЭ GO · РУССКИЙ ЯЗЫК</div>
       <h1>КАРТА: ОПЕРАЦИЯ ОГЭ</h1>
       <div class="tools">
         <button class="tbtn" type="button" id="bBrief">&#9658; БРИФИНГ</button>
         <button class="tbtn" type="button" id="bSnd">ЗВУК: ВКЛ</button>
+        <button class="tbtn inst" type="button" id="bInst" hidden>&#8681; УСТАНОВИТЬ</button>
       </div>
     </div>
     <div class="rankbox">
@@ -659,6 +673,30 @@ window.addEventListener('pageshow',function(){render();});
 document.addEventListener('visibilitychange',function(){if(!document.hidden)render();});
 render();
 if(!lsGet('karta-briefed'))openBrief();
+
+/* ---------- УСТАНОВКА НА ТЕЛЕФОН ---------- */
+if('serviceWorker' in navigator && location.protocol.indexOf('http')===0){
+  window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});
+}
+var installEvt=null,bInst=document.getElementById('bInst');
+var standalone=(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;
+var isIOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();installEvt=e;if(!standalone)bInst.hidden=false;});
+window.addEventListener('appinstalled',function(){bInst.hidden=true;installEvt=null;});
+if(isIOS&&!standalone)bInst.hidden=false;
+bInst.onclick=function(){
+  if(installEvt){installEvt.prompt();installEvt.userChoice.then(function(){installEvt=null;bInst.hidden=true;});return;}
+  lastFocus=document.activeElement;
+  card.className='card';
+  card.innerHTML='<button class="x" type="button" aria-label="Закрыть">&#10005;</button>'+
+    '<div class="k">УСТАНОВКА</div><h2>ОГЭ GO на экран «Домой»</h2>'+
+    '<ol class="ios-steps"><li>Откройте эту страницу в Safari.</li>'+
+    '<li>Нажмите кнопку «Поделиться» — квадрат со стрелкой вверх.</li>'+
+    '<li>Выберите «На экран "Домой"» и нажмите «Добавить».</li></ol>'+
+    '<p>Иконка ОГЭ GO появится на экране, и карта будет открываться как приложение — даже без интернета.</p>';
+  card.querySelector('.x').onclick=closeCard;
+  ov.classList.add('show');document.body.classList.add('lock');
+};
 </script>
 </body>
 </html>
