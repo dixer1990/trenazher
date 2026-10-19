@@ -1,12 +1,13 @@
 /* ОГЭ GO: помощник, который хранит карту и тренажёры в памяти телефона.
    С интернетом всегда берётся свежая версия с сайта, без интернета — сохранённая копия.
    Новый тренажёр? Впишите его файл в список FILES и увеличьте номер VERSION. */
-var VERSION = 'oge-go-v1';
+var VERSION = 'oge-go-v2';
 var FILES = [
   './',
   'index.html',
   'oge.html',
   'spryazhenie.html',
+  'slovosochetanie.html',
   'manifest.webmanifest',
   'icon-192.png',
   'icon-512.png',
