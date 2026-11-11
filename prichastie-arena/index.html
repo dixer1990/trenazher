@@ -454,6 +454,18 @@ body.noanim *,body.noanim *::before,body.noanim *::after{animation-duration:0s!i
 .ne-w{background:#ffe07a;color:#3a2500;border-radius:10px;padding:2px 8px;white-space:nowrap}
 .ne-w b{color:#b3261e}
 body.big .csent .w,body.big .nesent{letter-spacing:.1em}
+.plan{display:grid;gap:10px;margin-top:20px}
+.plan-step{display:flex;gap:12px;align-items:flex-start;background:rgba(46,211,198,.12);border:2px solid var(--teal);border-radius:16px;padding:10px 12px}
+.plan-step.battle{background:rgba(255,140,40,.12);border-color:var(--orange)}
+.plan-step>b{flex:0 0 34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--teal);color:#05343a;font-size:19px}
+.plan-step.battle>b{background:var(--orange);color:#3b1600}
+.plan-step h4{font-size:17px;margin:2px 0 3px;color:#fff}
+.plan-step small{font-size:14px;color:var(--muted);line-height:1.4}
+.plan-step u{color:var(--gold);text-decoration:none;font-weight:900}
+.interlude{text-align:center;padding:22px 16px;margin-top:10px}
+.interlude img{width:130px;height:130px;object-fit:cover;border-radius:22px;border:3px solid var(--gold);box-shadow:var(--shadow)}
+.interlude h2{color:var(--gold);font-size:24px;margin:14px 0 8px}
+.interlude p{font-size:18px;line-height:1.5;margin:0}
 </style>
 </head>
 <body>
@@ -1548,10 +1560,13 @@ function openArena(i){
     <h1 style="color:var(--gold);font-size:26px;margin:4px 4px 2px">Арена ${i+1} · ${esc(a.name)}</h1>
     <p class="note" style="margin:0 4px 14px">${esc(a.about)}. Нажми на карту, чтобы прочитать.</p>
     <div class="cards">${a.theory.map(cardHTML).join('')}</div>
-    <div class="row" style="margin-top:22px">
-      <button class="btn green" onclick="loading(${i}, ()=>startBattle(${i}))">⚔️ В бой!</button>
+    <div class="plan">
+      <div class="plan-step"><b>1</b><div><h4>Разминка · ${WARMUP_ARENA + WARMUP_GENERAL} заданий</h4><small>Сова и Лис: задания на внимание к буквам и звукам. Это ещё <u>не причастия</u> — так готовим глаза и руку.</small></div></div>
+      <div class="plan-step battle"><b>2</b><div><h4>Бой · задания по теме арены</h4><small>${esc(a.about)}</small></div></div>
     </div>
-    <p class="note center" style="margin-top:12px">Сначала ${WARMUP_ARENA + WARMUP_GENERAL} заданий на внимание с Совой и Лисом — слышим звуки, не теряем буквы. Потом штурм Крепости Ошибок.</p>`;
+    <div class="row" style="margin-top:16px">
+      <button class="btn green" onclick="loading(${i}, ()=>startBattle(${i}))">⚔️ В бой!</button>
+    </div>`;
   window.scrollTo(0,0);
 }
 
@@ -1562,7 +1577,7 @@ function loading(i, then, warmTitle){
   if(document.querySelector('.loader')) return;
   const warm = i < 0;
   const title = warm ? (warmTitle || 'Тренировка внимания') : `Арена ${i+1} · ${ARENAS[i].name}`;
-  const sub = warm ? 'Сова и Лис тренируют внимательное письмо' : ARENAS[i].about;
+  const sub = warm ? 'Сова и Лис тренируют внимательное письмо' : `Сначала разминка на внимание (${WARMUP_ARENA + WARMUP_GENERAL} заданий), потом бой`;
   const foe = warm ? {k:'sova', n:'Сова-Слухач'} : {k:'krepost', n:'Крепость Ошибок'};
   const tip = TIPS[Math.floor(Math.random()*TIPS.length)];
   const L = document.createElement('div'); L.className = 'loader';
@@ -1632,7 +1647,7 @@ function attentionPool(g){
 }
 function newBattle(arena, warmList, battleList, name){
   const warm = expand(warmList,'warm'), bat = expand(battleList,'battle');
-  B = {arena, queue:[...warm, ...bat], hpMax:Math.max(1,bat.length), hp:bat.length, first:0, total:warm.length+bat.length, trophies:0, mistakes:[],
+  B = {arena, warmN:warm.length, queue:[...warm, ...bat], hpMax:Math.max(1,bat.length), hp:bat.length, first:0, total:warm.length+bat.length, trophies:0, mistakes:[],
        rec:{start:Date.now(), arena, name: name || `Арена ${arena+1} «${ARENAS[arena].name}»`, items:[]}};
   next();
 }
@@ -1660,7 +1675,24 @@ function next(){
   if(!B) return;
   if(!B.queue.length) return finish();
   B.cur = B.queue.shift(); B.t0 = Date.now();
+  if(B.arena>=0 && B.cur.phase==='warm' && !B.cur.retry && !B.warmShown){
+    B.warmShown = true;
+    return interlude('sova', 'Шаг 1 из 2 · Разминка',
+      `Сначала <b>${B.warmN} заданий на внимание</b> с Совой и Лисом. Здесь <b>ещё не причастия</b>: учимся слышать каждый звук и не терять буквы.<br>Потом начнётся бой по теме арены.`, '🦉 Начать разминку');
+  }
+  if(B.arena>=0 && B.cur.phase==='battle' && !B.battleShown){
+    B.battleShown = true;
+    const n = B.queue.filter(t => t.phase==='battle').length + 1;
+    return interlude('krepost', 'Разминка пройдена! Шаг 2 из 2 · Бой',
+      `Теперь <b>${n} ${n%10>=2&&n%10<=4&&(n%100<12||n%100>14)?'задания':'заданий'}</b> по теме «${esc(ARENAS[B.arena].about)}». Каждый верный ответ — удар по Крепости Ошибок!`, '⚔️ В бой!');
+  }
   renderTask();
+}
+function interlude(img, title, html, btn){
+  app.innerHTML = topbar('askQuit()') + `<div class="panel interlude">${pic(img)}<h2>${title}</h2><p>${html}</p>
+    <div class="next-row"><button class="btn gold" id="goOn">${btn}</button></div></div>`;
+  document.getElementById('goOn').onclick = () => { B.t0 = Date.now(); renderTask(); };
+  window.scrollTo(0,0);
 }
 /* выход из боя посреди заданий */
 function askQuit(){
@@ -1688,9 +1720,9 @@ function shell(inner){
   const hpPct = Math.round(100*B.hp/B.hpMax);
   app.innerHTML = topbar('askQuit()') + `
     <div class="battle-top">
-      <div class="fort" id="fort" data-crack="${crackLevel()}">${pic(B.arena<0?'sova':'krepost')}<div class="cracks">${CRACKS}</div></div>
-      <div class="hpwrap"><div class="nm">${B.arena<0?'Тренировка внимания':'Крепость Ошибок'} · задание ${B.rec.items.length+1}</div><div class="hp ${B.arena<0?'prog':''}"><i style="width:${B.arena<0 ? Math.round(100*B.rec.items.length/Math.max(1,B.rec.items.length+B.queue.length+1)) : hpPct}%"></i></div></div>
-      <span class="phase ${warm?'':'battle'}">${warm?'Внимание':'Бой'}${t.retry?' · повтор':''}</span>
+      <div class="fort" id="fort" data-crack="${warm?0:crackLevel()}">${pic(B.arena<0||warm?'sova':'krepost')}<div class="cracks">${CRACKS}</div></div>
+      <div class="hpwrap"><div class="nm">${B.arena<0?'Тренировка внимания':(warm?'Разминка перед боем':'Крепость Ошибок')} · задание ${B.rec.items.length+1}</div><div class="hp ${B.arena<0||warm?'prog':''}"><i style="width:${B.arena<0 ? Math.round(100*B.rec.items.length/Math.max(1,B.rec.items.length+B.queue.length+1)) : warm ? Math.round(100*Math.min(B.rec.items.length,B.warmN)/Math.max(1,B.warmN)) : hpPct}%"></i></div></div>
+      <span class="phase ${warm?'':'battle'}">${warm ? (B.arena<0 ? 'Внимание' : (t.retry ? 'Разминка' : `Разминка ${Math.min(B.rec.items.length+1, B.warmN)}/${B.warmN}`)) : 'Бой'}${t.retry?' · повтор':''}</span>
     </div>
     <div class="stage" id="stage">${inner}</div>`;
 }
@@ -1707,6 +1739,7 @@ function done(ok, label, ans){
     B.mistakes.push(label);
     if(!t.retry) B.queue.push(Object.assign({}, t, {retry:true}));
   }
+  if(B.arena>=0 && t.phase==='warm' && !t.retry){ const bar = document.querySelector('.hp i'); if(bar) bar.style.width = Math.round(100*Math.min(B.rec.items.length,B.warmN)/Math.max(1,B.warmN))+'%'; }
   if(B.arena<0){ const bar = document.querySelector('.hp i'); if(bar) bar.style.width = Math.round(100*B.rec.items.length/Math.max(1,B.rec.items.length+B.queue.length))+'%'; }
   if(t.phase==='battle' && (ok || t.retry)){
     B.hp = Math.max(0, B.hp-1);
